@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="fun.whitea.easychatbackend.mapper.UserContactApplyMapper">
+
+    <select id="selectUserContactApplyWithContactName" resultType="fun.whitea.easychatbackend.entity.po.UserContactApply">
+        select a.*,
+               case
+                   when a.contact_type = 0 then u.nick_name
+                   when a.contact_type = 1 then g.group_name
+                   end as contactName
+        from user_contact_apply a
+                 left join user_info u on u.id = a.apply_user_id
+                 left join group_info g on g.id = a.contact_id
+        where receive_user_id = #{receiveUserId}
+    </select>
+</mapper>
