@@ -1,0 +1,48 @@
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    url: jdbc:mysql://localhost:3306/chat?serverTimezone=UTC&userUnicode=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: whitea20041029&
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
+  data:
+    redis:
+      database: 6
+      host: localhost
+      port: 6379
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1
+
+ws:
+  port: 5051
+
+server:
+  port: 5050
+  servlet:
+    context-path: /api
+
+# 注意带上“/”
+project:
+  folder: E:/easychat/easychat-backend/
+
+admin:
+  emails: 1664915115@qq.com
+
+mybatis-plus:
+  type-aliases-package: fun.whitea.easychatbackend.entity.po
+  mapperLocations: classpath*:mapper/*Mapper.xml
+
+logging:
+  level:
+    sacc:
+      drive:
+        mapper: debug
+        service: info
+        controller: info
