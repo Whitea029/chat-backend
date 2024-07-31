@@ -21,5 +21,7 @@ public class Constants {
     public static final String COVER_IMAGE_SUFFIX = "_cover.png";
     public static final String APPLY_INFO_TEMPLATE = "My name is s%";
     public static final Integer PAGE_SIZE15 = 15;
+    public static final String REGEX_PASSWORD = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$";
+
 
 }

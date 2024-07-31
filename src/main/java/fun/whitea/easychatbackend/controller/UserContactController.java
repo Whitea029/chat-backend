@@ -3,6 +3,7 @@ package fun.whitea.easychatbackend.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import fun.whitea.easychatbackend.entity.dto.UserContactSearchResultDto;
+import fun.whitea.easychatbackend.entity.enums.UserContactStatusEnum;
 import fun.whitea.easychatbackend.entity.po.UserContact;
 import fun.whitea.easychatbackend.entity.po.UserContactApply;
 import fun.whitea.easychatbackend.entity.po.UserInfo;
@@ -102,11 +103,30 @@ class UserContactController extends BaseController {
         return userContactApplyService.loadUserContacts(userId, contactType);
     }
 
+    /**
+     * 获取联系人详情 不一定是好友
+     * @param request
+     * @param contactId
+     * @return
+     */
 //    @GetMapping("/detail")
 //    UserContact getUserContactInfo(HttpServletRequest request, @NotNull String contactId) {
 //        val userId = getTokenUserInfoDto(request).getUserId();
 //        userContactService.getUserContaactInfo(userId, contactId);
 //    }
 
+    // todo 获取联系人信息 一定是好友
+
+    @DeleteMapping("/del")
+    void deleteUserContact(HttpServletRequest request, @NotNull String contactId) {
+        val userId = getTokenUserInfoDto(request).getUserId();
+        userContactService.removeUserContact(userId, contactId, UserContactStatusEnum.DEL);
+    }
+
+    @DeleteMapping("/black")
+    void addBlackListUserContact(HttpServletRequest request, @NotNull String contactId) {
+        val userId = getTokenUserInfoDto(request).getUserId();
+        userContactService.removeUserContact(userId, contactId, UserContactStatusEnum.BLACKLIST);
+    }
 
 }

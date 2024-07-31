@@ -1,6 +1,7 @@
 package fun.whitea.easychatbackend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wf.captcha.ArithmeticCaptcha;
 import fun.whitea.easychatbackend.config.AppConfig;
@@ -19,13 +20,17 @@ import fun.whitea.easychatbackend.utils.RedisComponent;
 import fun.whitea.easychatbackend.utils.RedisUtil;
 import fun.whitea.easychatbackend.utils.StringTool;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.util.*;
 
 @Service
@@ -67,7 +72,7 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void register(String email, String nickName, String password, String checkCodeKey, String checkCode) {
+    public void register(String email, String nickName, @Pattern(regexp = Constants.REGEX_PASSWORD)  String password, String checkCodeKey, String checkCode) {
         try {
             if (!checkCode.equals(redisUtil.get(Constants.REDIS_KEY_CHECK_CODE + checkCodeKey))) {
                 throw new BusinessException(ErrorEnum.PARAM_ERROR, "check code key error");
@@ -145,6 +150,43 @@ public class UserInfoServiceImpl implements UserInfoService {
         userInfoVo.setAdmin(tokenUserInfoDto.getAdmin());
 
         return userInfoVo;
+    }
+
+    @Override
+    public UserInfo getUserInfoByUserId(String userId) {
+        return userInfoMapper.selectOne(new LambdaQueryWrapper<UserInfo>().eq(UserInfo::getId, userId));
+    }
+
+    @Override
+    @SneakyThrows
+    @Transactional
+    public void updateUserInfo(UserInfo userInfo, MultipartFile avatarCover, MultipartFile avatarFile) {
+        if (avatarFile != null) {
+            String baseFolder = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE;
+            File targetFileFolder = new File(baseFolder + Constants.FILE_FOLDER_AVATAR_NAME);
+            if (!targetFileFolder.exists()) {
+                targetFileFolder.mkdirs();
+            }
+            String filePath = targetFileFolder.getPath() + "/" + userInfo.getId() + Constants.IMAGE_SUFFIX;
+            avatarFile.transferTo(new File(filePath));
+            avatarCover.transferTo(new File(filePath + Constants.COVER_IMAGE_SUFFIX));
+        }
+        UserInfo dbUser = userInfoMapper.selectOne(new QueryWrapper<UserInfo>().eq("id", userInfo));
+        userInfoMapper.updateById(userInfo);
+        String contactNameUpdate = null;
+        if (!dbUser.getNickName().equals(userInfo.getNickName())) {
+            contactNameUpdate = userInfo.getNickName();
+        }
+        // todo 更新会话中的昵称信息
+
+    }
+
+    @Override
+    public void updatePassword(String userId, String password) {
+        UserInfo userInfo = new UserInfo();
+        userInfo.setId(userId);
+        userInfo.setPassword(StringTool.encodeMd5(password));
+        userInfoMapper.updateById(userInfo);
     }
 
     private TokenUserInfoDto getTokenUserInfoDto(UserInfo userInfo) {

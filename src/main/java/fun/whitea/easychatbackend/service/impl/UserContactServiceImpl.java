@@ -1,6 +1,7 @@
 package fun.whitea.easychatbackend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.whitea.easychatbackend.entity.constants.Constants;
 import fun.whitea.easychatbackend.entity.dto.TokenUserInfoDto;
@@ -159,40 +160,60 @@ public class UserContactServiceImpl implements UserContactService {
     }
 
     @Override
-    public void getUserContaactInfo(String userId, String contactId) {
+    public void getUserContactInfo(String userId, String contactId) {
 
+    }
+
+
+    @Override
+    public void removeUserContact(String userId, String contactId, UserContactStatusEnum userContactStatusEnum) {
+        // 移除好友
+        userContactMapper.update(new UpdateWrapper<UserContact>()
+                .set("status", userContactStatusEnum.getStatus())
+                .eq("contact_id", contactId)
+                .eq("id", userId));
+        // 将好友中也移除自己
+        UpdateWrapper<UserContact> userContactUpdateWrapper = new UpdateWrapper<>();
+        if (UserContactStatusEnum.DEL == userContactStatusEnum) {
+            userContactUpdateWrapper.set("status", UserContactStatusEnum.DEL_BE.getStatus());
+        } else if (UserContactStatusEnum.BLACKLIST == userContactStatusEnum) {
+            userContactUpdateWrapper.set("status", UserContactStatusEnum.BLACKLIST_BE.getStatus());
         }
+        userContactMapper.update(userContactUpdateWrapper.eq("id", contactId).eq("contact_id", userId));
+        // todo 从我的好友列表缓存中删除好友
+        // todo 从好友缓存列表中删除我
+    }
 
-        List<List<String>> res = new ArrayList<>();
-        List<String> path = new LinkedList<>();
+    List<List<String>> res = new ArrayList<>();
+    List<String> path = new LinkedList<>();
 
-        public List<List<String>> partition(String s) {
-            backTracking(s, 0);
-            return res;
+    public List<List<String>> partition(String s) {
+        backTracking(s, 0);
+        return res;
+    }
+
+    public void backTracking(String s, int startIndex) {
+        if (startIndex > s.length()) {
+            res.add(new ArrayList<>(path));
+            return;
         }
-
-        public void backTracking(String s, int startIndex) {
-            if (startIndex > s.length()) {
-                res.add(new ArrayList<>(path));
-                return;
+        for (int i = startIndex; i < s.length(); i++) {
+            if (fun(s.substring(startIndex, i))) {
+                path.add(s.substring(startIndex, i));
+            } else {
+                continue;
             }
-            for (int i = startIndex; i < s.length(); i++) {
-                if (fun(s.substring(startIndex, i))) {
-                    path.add(s.substring(startIndex, i));
-                } else {
-                    continue;
-                }
-                backTracking(s, i + 1);
-                path.removeLast();
-            }
-        }
-
-        public Boolean fun(String s) {
-            for (int i = 0, j = s.length() - 1; i < j; i++, j--) {
-                if (s.charAt(i) != s.charAt(j)) {
-                    return false;
-                }
-            }
-            return true;
+            backTracking(s, i + 1);
+            path.removeLast();
         }
     }
+
+    public Boolean fun(String s) {
+        for (int i = 0, j = s.length() - 1; i < j; i++, j--) {
+            if (s.charAt(i) != s.charAt(j)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}

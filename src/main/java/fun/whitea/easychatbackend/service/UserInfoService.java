@@ -1,10 +1,12 @@
 package fun.whitea.easychatbackend.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import fun.whitea.easychatbackend.entity.constants.Constants;
 import fun.whitea.easychatbackend.entity.po.UserInfo;
 import fun.whitea.easychatbackend.entity.vo.UserInfoVo;
 import jakarta.validation.constraints.NotEmpty;
-import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.validation.constraints.Pattern;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -33,7 +35,7 @@ public interface UserInfoService {
      * @param checkCodeKey
      * @param checkCode
      */
-    void register(String email, String nickName, String password, String checkCodeKey, String checkCode);
+    void register(String email, String nickName, @Pattern(regexp = Constants.REGEX_PASSWORD)  String password, String checkCodeKey, String checkCode);
 
     /**
      * login
@@ -45,4 +47,10 @@ public interface UserInfoService {
      * @return
      */
     UserInfoVo login(String email, String password, @NotEmpty String checkCodeKey, @NotEmpty String checkCode);
+
+    UserInfo getUserInfoByUserId(String userId);
+
+    void updateUserInfo(UserInfo userInfo, MultipartFile avatarCover, MultipartFile avatarFile);
+
+    void updatePassword(String userId, String password);
 }
