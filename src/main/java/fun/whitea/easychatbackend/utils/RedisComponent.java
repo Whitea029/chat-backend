@@ -23,8 +23,14 @@ public class RedisComponent {
     }
 
     public void saveTokenUserInfo(TokenUserInfoDto tokenUserInfoDto) {
+        // token 存 tokenUserInfoDto
         redisUtil.set(Constants.REDIS_KEY_WS_TOKEN + tokenUserInfoDto.getToken(), tokenUserInfoDto, Constants.REDIS_TIME_DAY * 2);
-        redisUtil.set(Constants.REDIS_KEY_WS_TOKEN_USERID + tokenUserInfoDto.getToken(), tokenUserInfoDto.getToken(), Constants.REDIS_TIME_DAY * 2);
+        // userId 存 token
+        redisUtil.set(Constants.REDIS_KEY_WS_TOKEN_USERID + tokenUserInfoDto.getUserId(), tokenUserInfoDto.getToken(), Constants.REDIS_TIME_DAY * 2);
+    }
+
+    public TokenUserInfoDto getTokenUserInfoDto(String token) {
+        return (TokenUserInfoDto) redisUtil.get(Constants.REDIS_KEY_WS_TOKEN + token);
     }
 
     public SysSettingDto getSysSetting() {
