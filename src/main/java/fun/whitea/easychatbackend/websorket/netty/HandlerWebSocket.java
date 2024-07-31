@@ -2,12 +2,15 @@ package fun.whitea.easychatbackend.websorket.netty;
 
 import fun.whitea.easychatbackend.entity.dto.TokenUserInfoDto;
 import fun.whitea.easychatbackend.utils.RedisComponent;
+import fun.whitea.easychatbackend.websorket.ChannelContextUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,9 @@ public class HandlerWebSocket extends SimpleChannelInboundHandler<TextWebSocketF
 
     @Resource
     RedisComponent redisComponent;
+    @Resource
+    ChannelContextUtil channelContextUtil;
+
 
     /**
      * 通道就绪，调用，一般用来初始化
@@ -44,7 +50,11 @@ public class HandlerWebSocket extends SimpleChannelInboundHandler<TextWebSocketF
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, TextWebSocketFrame webSocketFrame) throws Exception {
         Channel channel = channelHandlerContext.channel();
-        logger.info("收到消息{}", webSocketFrame.text());
+        Attribute<String> attribute = channel.attr(AttributeKey.valueOf(channel.id().toString()));
+        String userId = attribute.get();
+        logger.info("收到消息:userId:{},消息:{}", userId, webSocketFrame.text());
+        redisComponent.getTokenUserInfoDto(userId);
+        channelContextUtil.send2Group(webSocketFrame.text());
     }
 
 
@@ -69,6 +79,7 @@ public class HandlerWebSocket extends SimpleChannelInboundHandler<TextWebSocketF
                 ctx.close();
                 return;
             }
+            channelContextUtil.addContext(tokenUserInfoDto.getUserId(), ctx.channel());
 
         }
 

@@ -1,6 +1,7 @@
 package fun.whitea.easychatbackend.websorket.netty;
 
 import fun.whitea.easychatbackend.config.AppConfig;
+import fun.whitea.easychatbackend.websorket.ChannelContextUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -31,8 +32,6 @@ public class NettyWebSocketStarter implements Runnable{
 
     private static EventLoopGroup bossGroup = new NioEventLoopGroup(1);
     private static EventLoopGroup workerGroup = new NioEventLoopGroup();
-    @Autowired
-    private AppConfig appConfig;
 
     @PreDestroy
     public void close() {
@@ -45,6 +44,8 @@ public class NettyWebSocketStarter implements Runnable{
     HandlerWebSocket handlerWebSocket;
     @Resource
     HandleHeartBeat handleHeartBeat;
+    @Resource
+    AppConfig appConfig;
 
     @Override
     public void run() {
@@ -67,7 +68,7 @@ public class NettyWebSocketStarter implements Runnable{
                             // readerIdleTime 读超时时间，测试段一定时间内未接受到被测试段消息
                             // writerIdleTime 写超时时间，测试段一定时间内向被测试段发送消息
                             // allIdleTime 所有类型操作时间
-                            pipeline.addLast(new IdleStateHandler(6, 0, 0, TimeUnit.SECONDS));
+                            pipeline.addLast(new IdleStateHandler(60, 0, 0, TimeUnit.SECONDS));
                             pipeline.addLast(handleHeartBeat);
                             // 将http协议升级为ws
                             pipeline.addLast(new WebSocketServerProtocolHandler("/ws", null, true, 65536, true, true, 10000L));

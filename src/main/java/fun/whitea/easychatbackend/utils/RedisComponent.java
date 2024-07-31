@@ -3,9 +3,11 @@ package fun.whitea.easychatbackend.utils;
 import fun.whitea.easychatbackend.entity.constants.Constants;
 import fun.whitea.easychatbackend.entity.dto.SysSettingDto;
 import fun.whitea.easychatbackend.entity.dto.TokenUserInfoDto;
+import io.netty.channel.Channel;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 @Component("redisComponent")
 public class RedisComponent {
@@ -21,6 +23,14 @@ public class RedisComponent {
     public Long getUserHeartBeat(String userId) {
         return (Long) redisUtil.get(Constants.REDIS_KEY_WS_USER_HEART_BEAT + userId);
     }
+
+    /**
+     * 设置心跳
+     */
+    public void saveUserHeartBeat(String userId) {
+        redisUtil.setnx(Constants.REDIS_KEY_WS_USER_HEART_BEAT + userId, System.currentTimeMillis(), Constants.REDIS_KEY_EXPIRES_HEART_BEAT, TimeUnit.SECONDS);
+    }
+
 
     public void saveTokenUserInfo(TokenUserInfoDto tokenUserInfoDto) {
         // token 存 tokenUserInfoDto
