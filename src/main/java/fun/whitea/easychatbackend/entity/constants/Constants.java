@@ -25,4 +25,6 @@ public class Constants {
     public static final String REGEX_PASSWORD = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$";
 
 
+    public static final String REDIS_KEY_USER_CONTACT = "ws:user:contact:";
+    public static final Long MILLIS_SECONDS_3_DAYS_AGO = 3 * 60 * 24 * 60 * 1000L;
 }

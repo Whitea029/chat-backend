@@ -8,12 +8,15 @@ import fun.whitea.easychatbackend.config.AppConfig;
 import fun.whitea.easychatbackend.entity.constants.Constants;
 import fun.whitea.easychatbackend.entity.dto.TokenUserInfoDto;
 import fun.whitea.easychatbackend.entity.enums.*;
+import fun.whitea.easychatbackend.entity.po.UserContact;
 import fun.whitea.easychatbackend.entity.po.UserInfo;
 import fun.whitea.easychatbackend.entity.po.UserInfoBeauty;
 import fun.whitea.easychatbackend.entity.vo.UserInfoVo;
 import fun.whitea.easychatbackend.exception.BusinessException;
+import fun.whitea.easychatbackend.mapper.UserContactMapper;
 import fun.whitea.easychatbackend.mapper.UserInfoBeautyMapper;
 import fun.whitea.easychatbackend.mapper.UserInfoMapper;
+import fun.whitea.easychatbackend.service.UserContactService;
 import fun.whitea.easychatbackend.service.UserInfoService;
 import fun.whitea.easychatbackend.utils.CopyUtil;
 import fun.whitea.easychatbackend.utils.RedisComponent;
@@ -25,6 +28,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -46,7 +51,11 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Resource
     AppConfig appConfig;
     @Resource
-    private RedisComponent redisComponent;
+    RedisComponent redisComponent;
+    @Resource
+    UserContactMapper userContactMapper;
+    @Resource
+    UserContactService userContactService;
 
     @Override
     public Page<UserInfo> getUserInfo(Integer pageNo, Integer pageSize) {
@@ -108,6 +117,8 @@ public class UserInfoServiceImpl implements UserInfoService {
             userInfoBeautyMapper.insert(userInfoBeauty);
         }
         // TODO 创建机器人好友
+        userContactService.addContact4Robot(userId);
+
     }
 
     @Override
@@ -129,7 +140,18 @@ public class UserInfoServiceImpl implements UserInfoService {
         } else if (!Objects.equals(StringTool.encodeMd5(password), userInfo.getPassword())) {
             throw new BusinessException(ErrorEnum.LOGIN_ERROR, "Wrong password");
         }
-        // TODO 查询我的群组
+
+        // 查询我的群组
+        LambdaQueryWrapper<UserContact> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserContact::getId, userInfo.getId());
+        queryWrapper.eq(UserContact::getStatus, UserContactStatusEnum.FRIEND.getStatus());
+        List<UserContact> userContacts = userContactMapper.selectList(queryWrapper);
+        List<String> contactIds = userContacts.stream().map(UserContact::getContactId).toList();
+        redisComponent.cleanUserContact(userInfo.getId());
+        if (!contactIds.isEmpty()) {
+            redisComponent.addUserContactBatch(userInfo.getId(), contactIds);
+        }
+
         // TODO 查询我的联系人
 
         // 获取TokenUserInfoDto

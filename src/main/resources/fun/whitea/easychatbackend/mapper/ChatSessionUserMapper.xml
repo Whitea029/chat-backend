@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="fun.whitea.easychatbackend.mapper.ChatSessionUserMapper">
+
+    <select id="selectListByUserId" resultType="fun.whitea.easychatbackend.entity.po.ChatSessionUser">
+        SELECT csu.*,
+               cs.last_message      lastMessage,
+               cs.last_receive_time lastReceiveTime,
+               CASE
+                   WHEN SUBSTRING(contact_id, 1, 1) = 'G'
+                       THEN (SELECT COUNT(1) FROM user_contact uc WHERE uc.contact_id = csu.contact_id)
+                   ELSE 0
+                   END              memberCount
+        FROM chat_session_user csu
+                 INNER JOIN chat_session cs ON cs.session_id = csu.session_id
+        WHERE csu.user_id = ${userId};
+    </select>
+
+</mapper>

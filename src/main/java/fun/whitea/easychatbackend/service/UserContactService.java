@@ -18,4 +18,7 @@ public interface UserContactService{
     void getUserContactInfo(String userId, String contactId);
 
     void removeUserContact(String userId, String contactId, UserContactStatusEnum userContactStatusEnum);
+
+    void addContact4Robot(String userId);
+
 }

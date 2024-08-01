@@ -53,14 +53,14 @@ public class HandlerWebSocket extends SimpleChannelInboundHandler<TextWebSocketF
         Attribute<String> attribute = channel.attr(AttributeKey.valueOf(channel.id().toString()));
         String userId = attribute.get();
         logger.info("收到消息:userId:{},消息:{}", userId, webSocketFrame.text());
-        redisComponent.getTokenUserInfoDto(userId);
-        channelContextUtil.send2Group(webSocketFrame.text());
+        redisComponent.saveUserHeartBeat(userId);
     }
 
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info("有连接断开");
+        channelContextUtil.removeContext(ctx.channel());
     }
 
     @Override

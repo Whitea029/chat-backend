@@ -4,26 +4,26 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.whitea.easychatbackend.entity.constants.Constants;
+import fun.whitea.easychatbackend.entity.dto.SysSettingDto;
 import fun.whitea.easychatbackend.entity.dto.TokenUserInfoDto;
 import fun.whitea.easychatbackend.entity.dto.UserContactSearchResultDto;
 import fun.whitea.easychatbackend.entity.enums.*;
-import fun.whitea.easychatbackend.entity.po.UserContact;
-import fun.whitea.easychatbackend.entity.po.UserContactApply;
+import fun.whitea.easychatbackend.entity.po.*;
 import fun.whitea.easychatbackend.exception.BusinessException;
-import fun.whitea.easychatbackend.mapper.GroupInfoMapper;
-import fun.whitea.easychatbackend.mapper.UserContactApplyMapper;
-import fun.whitea.easychatbackend.mapper.UserContactMapper;
-import fun.whitea.easychatbackend.mapper.UserInfoMapper;
+import fun.whitea.easychatbackend.mapper.*;
 import fun.whitea.easychatbackend.service.UserContactApplyService;
 import fun.whitea.easychatbackend.service.UserContactService;
 import fun.whitea.easychatbackend.utils.CopyUtil;
+import fun.whitea.easychatbackend.utils.RedisComponent;
 import fun.whitea.easychatbackend.utils.StringTool;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,6 +40,14 @@ public class UserContactServiceImpl implements UserContactService {
     UserContactApplyMapper userContactApplyMapper;
     @Resource
     UserContactApplyService userContactApplyService;
+    @Resource
+    RedisComponent redisComponent;
+    @Resource
+    ChatSessionMapper chatSessionMapper;
+    @Resource
+    ChatSessionUserMapper chatSessionUserMapper;
+    @Resource
+    ChatMessageMapper chatMessageMapper;
 
     @Override
     public List<UserContact> getUserContactList(String id) {
@@ -182,6 +190,59 @@ public class UserContactServiceImpl implements UserContactService {
         userContactMapper.update(userContactUpdateWrapper.eq("id", contactId).eq("contact_id", userId));
         // todo 从我的好友列表缓存中删除好友
         // todo 从好友缓存列表中删除我
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addContact4Robot(String userId) {
+        Date curDate = new Date();
+        SysSettingDto sysSettingDto = redisComponent.getSysSetting();
+        String contactId = sysSettingDto.getRobotUid();
+        String contactName = sysSettingDto.getRobotNickName();
+        String sendMessage = sysSettingDto.getRobotWelcome();
+        sendMessage = StringTool.cleanHtmlTag(sendMessage);
+
+        // 增加机器人好友
+        UserContact userContact = UserContact.builder()
+                .id(userId)
+                .contactId(contactId)
+                .contactName(contactName)
+                .contactType(UserContactTypeEnum.USER.getType())
+                .createTime(curDate)
+                .lastUpdateTime(curDate)
+                .status(UserContactStatusEnum.FRIEND.getStatus())
+                .build();
+        userContactMapper.insert(userContact);
+
+        // 增加会话信息
+        String sessionId = StringTool.getChatSessionId4User(new String[]{userId, contactId});
+        ChatSession chatSession = new ChatSession();
+        chatSession.setSessionId(sessionId);
+        chatSession.setLastReceiveTime(curDate.getTime());
+        chatSessionMapper.insert(chatSession);
+
+        // 添加会话人信息
+        ChatSessionUser chatSessionUser = ChatSessionUser.builder()
+                .userId(userId)
+                .contactId(contactId)
+                .contactName(contactName)
+                .sessionId(sessionId)
+                .build();
+        chatSessionUserMapper.insert(chatSessionUser);
+
+        // 添加聊天消息
+        ChatMessage chatMessage = ChatMessage.builder()
+                .sessionId(sessionId)
+                .messageType(MessageTypeEnum.CHAT.getType())
+                .messageContent(sendMessage)
+                .sendUserId(contactId)
+                .sendUserNickName(contactName)
+                .sendTime(curDate.getTime())
+                .contactId(userId)
+                .contactType(UserContactTypeEnum.USER.getType())
+                .status(MessageStatusEnum.SENT.getStatus())
+                .build();
+        chatMessageMapper.insert(chatMessage);
     }
 
     List<List<String>> res = new ArrayList<>();
