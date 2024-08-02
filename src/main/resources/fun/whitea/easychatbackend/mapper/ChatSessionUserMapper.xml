@@ -15,7 +15,7 @@
                    END              memberCount
         FROM chat_session_user csu
                  INNER JOIN chat_session cs ON cs.session_id = csu.session_id
-        WHERE csu.user_id = ${userId};
+        WHERE csu.user_id = #{userId};
     </select>
 
 </mapper>

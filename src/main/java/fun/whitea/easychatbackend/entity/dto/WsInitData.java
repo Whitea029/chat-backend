@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class WsInitData {
 
-    private List<ChatSessionUser> chatSessionUserList;
+    private List<ChatSessionUser> chatSessionList;
 
     private List<ChatMessage> chatMessageList;
 

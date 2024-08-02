@@ -61,11 +61,11 @@ public class RedisComponent {
 
     // 批量添加联系人
     public void addUserContactBatch(String userId, List<String> contactIds) {
-        redisUtil.lSet(Constants.REDIS_KEY_USER_CONTACT + userId, contactIds, Constants.REDIS_TIME_DAY * 2);
+        redisUtil.lPushAll(Constants.REDIS_KEY_USER_CONTACT + userId, contactIds, Constants.REDIS_TIME_DAY * 2, TimeUnit.MILLISECONDS);
     }
 
     public List<String> getUserContactIds(String userId) {
-        return (List<String>) redisUtil.get(Constants.REDIS_KEY_USER_CONTACT + userId);
+        return (List<String>) redisUtil.getQueueList(Constants.REDIS_KEY_USER_CONTACT + userId);
     }
 
 }

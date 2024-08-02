@@ -1,16 +1,19 @@
 package fun.whitea.easychatbackend.entity.po;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import fun.whitea.easychatbackend.entity.enums.UserContactTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ChatSessionUser {
+public class ChatSessionUser implements Serializable {
 
     private String userId; // 用户ID
     private String contactId; // 联系人ID
@@ -22,5 +25,11 @@ public class ChatSessionUser {
     private String lastReceiveTime;
     @TableField(exist = false)
     private Integer MemberCount;
+    @TableField(exist = false)
+    private Integer contactType;
+
+    public Integer getContactType() {
+        return UserContactTypeEnum.getByPrefix(contactId).getType();
+    }
 
 }

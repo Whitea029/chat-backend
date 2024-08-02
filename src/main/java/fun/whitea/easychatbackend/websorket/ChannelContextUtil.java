@@ -6,12 +6,13 @@ import fun.whitea.easychatbackend.entity.constants.Constants;
 import fun.whitea.easychatbackend.entity.dto.MessageSendDto;
 import fun.whitea.easychatbackend.entity.dto.WsInitData;
 import fun.whitea.easychatbackend.entity.enums.MessageTypeEnum;
+import fun.whitea.easychatbackend.entity.enums.UserContactApplyStatusEnum;
 import fun.whitea.easychatbackend.entity.enums.UserContactTypeEnum;
+import fun.whitea.easychatbackend.entity.po.ChatMessage;
 import fun.whitea.easychatbackend.entity.po.ChatSessionUser;
+import fun.whitea.easychatbackend.entity.po.UserContactApply;
 import fun.whitea.easychatbackend.entity.po.UserInfo;
-import fun.whitea.easychatbackend.mapper.ChatSessionMapper;
-import fun.whitea.easychatbackend.mapper.ChatSessionUserMapper;
-import fun.whitea.easychatbackend.mapper.UserInfoMapper;
+import fun.whitea.easychatbackend.mapper.*;
 import fun.whitea.easychatbackend.utils.JsonUtils;
 import fun.whitea.easychatbackend.utils.RedisComponent;
 import io.netty.channel.Channel;
@@ -20,7 +21,6 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import org.apache.catalina.User;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,11 @@ public class ChannelContextUtil {
     @Resource
     ChatSessionMapper chatSessionMapper;
     @Resource
+    ChatMessageMapper chatMessageMapper;
+    @Resource
     ChatSessionUserMapper chatSessionUserMapper;
+    @Resource
+    UserContactApplyMapper userContactApplyMapper;
 
     public void addContext(String userId, Channel channel) {
         String channelId = channel.id().toString();
@@ -84,11 +88,22 @@ public class ChannelContextUtil {
         // 查询会话信息
         List<ChatSessionUser> chatSessionUsers = chatSessionUserMapper.selectListByUserId(userId);
         WsInitData wsInitData = new WsInitData();
-        wsInitData.setChatSessionUserList(chatSessionUsers);
+        wsInitData.setChatSessionList(chatSessionUsers);
 
         // 查询聊天消息
+        // 查询所有的联系人
+        List<String> groupIds = userContactIds.stream().filter(e -> e.startsWith(UserContactTypeEnum.GROUP.getPrefix())).toList();
+        groupIds.add(userId);
+        List<ChatMessage> chatMessageList = chatMessageMapper.selectBatchContactIds(groupIds, lastOffTime);
+        wsInitData.setChatMessageList(chatMessageList);
 
         // 查询好友申请
+        Integer applyCount = Math.toIntExact(userContactApplyMapper.selectCount(
+                new QueryWrapper<UserContactApply>()
+                        .eq("receive_user_id", userId)
+                        .eq("status", UserContactApplyStatusEnum.INIT.getStatus())
+                        .gt("last_apply_time", lastOffTime)));
+        wsInitData.setApplyCount(applyCount);
 
         // 发送消息
         MessageSendDto messageSendDto = new MessageSendDto();

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="fun.whitea.easychatbackend.mapper.ChatMessageMapper">
+
+    <select id="selectBatchContactIds" resultType="fun.whitea.easychatbackend.entity.po.ChatMessage">
+        SELECT *
+        FROM chat_message
+        WHERE contact_id IN
+        <if test="groupIds != null and groupIds.size() > 0">
+            <foreach collection="groupIds" item="contactId" separator="," close=")" open="(">
+                #{contactId}
+            </foreach>
+        </if>
+        <if test="lastOffTime != null">
+            AND send_time >= #{lastOffTime}
+        </if>
+    </select>
+</mapper>

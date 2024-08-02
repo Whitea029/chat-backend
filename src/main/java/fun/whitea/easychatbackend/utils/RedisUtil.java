@@ -122,6 +122,15 @@ public class RedisUtil {
         }
     }
 
+    public void lPushAll(String key, List<String> list, Integer time, TimeUnit timeUnit) {
+        redisTemplate.opsForList().leftPushAll(prefix + key, JsonUtil.object2Json(list));
+        redisTemplate.expire(prefix + key, time, timeUnit);
+    }
+
+    public List getQueueList(String key) {
+        return redisTemplate.opsForList().range(prefix + key, 0, -1);
+    }
+
     /**
      * 消费消息
      *
