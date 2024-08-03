@@ -116,14 +116,14 @@ public class RedisUtil {
      */
     public void produce(Object json) {
         try {
-            redisTemplate.opsForList().leftPush(prefix + MESSAGE_KEY, JsonUtil.object2Json(json));
+            redisTemplate.opsForList().leftPush(prefix + MESSAGE_KEY, JsonUtils.convertObj2Json(json));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public void lPushAll(String key, List<String> list, Integer time, TimeUnit timeUnit) {
-        redisTemplate.opsForList().leftPushAll(prefix + key, JsonUtil.object2Json(list));
+        redisTemplate.opsForList().leftPushAll(prefix + key, JsonUtils.convertObj2Json(list));
         redisTemplate.expire(prefix + key, time, timeUnit);
     }
 

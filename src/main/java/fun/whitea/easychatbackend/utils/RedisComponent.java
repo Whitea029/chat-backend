@@ -54,6 +54,14 @@ public class RedisComponent {
         return sysSettingDto;
     }
 
+    public void cleanUserTokenByUserId(String userId) {
+        String token = (String) redisUtil.get(Constants.REDIS_KEY_WS_TOKEN_USERID + userId);
+        if (StringTool.isEmpty(token)) {
+            return;
+        }
+        redisUtil.del(Constants.REDIS_KEY_WS_TOKEN + token);
+    }
+
     // 清空联系人
     public void cleanUserContact(String userId) {
         redisUtil.del(Constants.REDIS_KEY_USER_CONTACT + userId);

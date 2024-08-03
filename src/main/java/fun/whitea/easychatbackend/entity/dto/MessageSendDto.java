@@ -2,6 +2,7 @@ package fun.whitea.easychatbackend.entity.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +13,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Builder
 public class MessageSendDto<T> implements Serializable {
 
     private Long messageId;

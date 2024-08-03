@@ -1,7 +1,7 @@
 package fun.whitea.easychatbackend.response;
 
 import fun.whitea.easychatbackend.entity.enums.ErrorEnum;
-import fun.whitea.easychatbackend.utils.JsonUtil;
+import fun.whitea.easychatbackend.utils.JsonUtils;
 import lombok.SneakyThrows;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -36,7 +36,7 @@ public class GlobalResponseHandler implements ResponseBodyAdvice<Object> {
             case GlobalResponse<?> resp -> resp;
             case String str -> {
                 response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                yield GlobalResponse.success(JsonUtil.object2Json(str));
+                yield GlobalResponse.success(JsonUtils.convertObj2Json(str));
             }
             case ErrorEnum error -> GlobalResponse.failure(error);
             default -> GlobalResponse.success(body);

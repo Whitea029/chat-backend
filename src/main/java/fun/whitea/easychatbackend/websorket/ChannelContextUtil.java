@@ -8,13 +8,11 @@ import fun.whitea.easychatbackend.entity.dto.WsInitData;
 import fun.whitea.easychatbackend.entity.enums.MessageTypeEnum;
 import fun.whitea.easychatbackend.entity.enums.UserContactApplyStatusEnum;
 import fun.whitea.easychatbackend.entity.enums.UserContactTypeEnum;
-import fun.whitea.easychatbackend.entity.po.ChatMessage;
-import fun.whitea.easychatbackend.entity.po.ChatSessionUser;
-import fun.whitea.easychatbackend.entity.po.UserContactApply;
-import fun.whitea.easychatbackend.entity.po.UserInfo;
+import fun.whitea.easychatbackend.entity.po.*;
 import fun.whitea.easychatbackend.mapper.*;
 import fun.whitea.easychatbackend.utils.JsonUtils;
 import fun.whitea.easychatbackend.utils.RedisComponent;
+import fun.whitea.easychatbackend.utils.StringTool;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -116,7 +114,7 @@ public class ChannelContextUtil {
     /**
      * 发送消息
      */
-    public static void sendMsg(MessageSendDto messageSendDto, String receiveId) {
+    public void sendMsg(MessageSendDto messageSendDto, String receiveId) {
         if (receiveId == null) {
             return;
         }
@@ -157,5 +155,51 @@ public class ChannelContextUtil {
 
     }
 
+    public void sendMessage(MessageSendDto messageSendDto) {
+        UserContactTypeEnum contactTypeEnum = UserContactTypeEnum.getByPrefix(messageSendDto.getContactId());
+        switch (contactTypeEnum) {
+            case USER:
+                send2User(messageSendDto);
+                break;
+            case GROUP:
+                send2Group(messageSendDto);
+                break;
+        }
+    }
 
+    private void send2User(MessageSendDto messageSendDto) {
+        String contactId = messageSendDto.getContactId();
+        if (StringTool.isEmpty(contactId)){
+            return;
+        }
+        sendMsg(messageSendDto, contactId);
+        // 强制下线
+        if (messageSendDto.getMessageType().equals(MessageTypeEnum.FORCE_OFF_LINE.getType())) {
+            // 关闭通道
+            closeContext(contactId);
+        }
+    }
+
+    public void closeContext(String userId) {
+        if (StringTool.isEmpty(userId)) {
+            return;
+        }
+        redisComponent.cleanUserTokenByUserId(userId);
+        Channel channel = USER_CONTEXT_MAP.get(userId);
+        if (channel == null) {
+            return;
+        }
+        channel.close();
+    }
+
+    private void send2Group(MessageSendDto messageSendDto) {
+        if (StringTool.isEmpty(messageSendDto.getContactId())) {
+            return;
+        }
+        ChannelGroup channelGroup = GROUP_CONTEXT_MAP.get(messageSendDto.getContactId());
+        if (channelGroup == null) {
+            return;
+        }
+        channelGroup.writeAndFlush(new TextWebSocketFrame(JsonUtils.convertObj2Json(messageSendDto)));
+    }
 }

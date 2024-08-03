@@ -1,6 +1,7 @@
 package fun.whitea.easychatbackend.websorket.netty;
 
 import fun.whitea.easychatbackend.config.AppConfig;
+import fun.whitea.easychatbackend.utils.StringTool;
 import fun.whitea.easychatbackend.websorket.ChannelContextUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -75,7 +77,12 @@ public class NettyWebSocketStarter implements Runnable{
                             pipeline.addLast(handlerWebSocket);
                         }
                     });
-            ChannelFuture future = bootstrap.bind(appConfig.getWsPort()).syncUninterruptibly();
+            Integer wsPort = appConfig.getWsPort();
+            String wsPortStr = System.getProperty("ws.port");
+            if (!StringTool.isEmpty(wsPortStr)) {
+                wsPort = Integer.parseInt(wsPortStr);
+            }
+            ChannelFuture future = bootstrap.bind(wsPort).syncUninterruptibly();
             logger.info("Netty启动成功, 端口：{}", appConfig.getWsPort());
             future.channel().closeFuture().syncUninterruptibly();
         } finally {

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import fun.whitea.easychatbackend.entity.constants.Constants;
+import fun.whitea.easychatbackend.entity.dto.MessageSendDto;
 import fun.whitea.easychatbackend.entity.dto.SysSettingDto;
 import fun.whitea.easychatbackend.entity.dto.TokenUserInfoDto;
 import fun.whitea.easychatbackend.entity.dto.UserContactSearchResultDto;
@@ -16,6 +17,7 @@ import fun.whitea.easychatbackend.service.UserContactService;
 import fun.whitea.easychatbackend.utils.CopyUtil;
 import fun.whitea.easychatbackend.utils.RedisComponent;
 import fun.whitea.easychatbackend.utils.StringTool;
+import fun.whitea.easychatbackend.websorket.netty.MessageHandle;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,6 +50,8 @@ public class UserContactServiceImpl implements UserContactService {
     ChatSessionUserMapper chatSessionUserMapper;
     @Resource
     ChatMessageMapper chatMessageMapper;
+    @Resource
+    MessageHandle messageHandle;
 
     @Override
     public List<UserContact> getUserContactList(String id) {
@@ -162,7 +166,12 @@ public class UserContactServiceImpl implements UserContactService {
             userContactApplyMapper.updateById(contactApply);
         }
         if (dbApply == null || !UserContactApplyStatusEnum.INIT.getStatus().equals(dbApply.getStatus())) {
-            // TODO 发送ws消息
+            // 发送ws消息
+            MessageSendDto messageSendDto = MessageSendDto.builder()
+                    .messageContent(applyInfo)
+                    .contactId(receiveId)
+                    .build();
+            messageHandle.sendMessage(messageSendDto);
         }
         return joinType;
     }
