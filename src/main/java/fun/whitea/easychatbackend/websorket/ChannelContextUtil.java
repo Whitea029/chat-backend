@@ -124,10 +124,23 @@ public class ChannelContextUtil {
         }
 
         // 相对于客户端而言，联系人就是发送人，所以这里转换一下在发送
-        messageSendDto.setContactId(messageSendDto.getSendUserId());
-        messageSendDto.setContactName(messageSendDto.getSendUserNickName());
+        if (MessageTypeEnum.ADD_FRIEND_SELF.getType().equals(messageSendDto.getMessageType())) {
+            UserInfo userInfo = (UserInfo) messageSendDto.getExtendData();
+            messageSendDto.setMessageType(MessageTypeEnum.ADD_FRIEND.getType());
+            messageSendDto.setContactId(userInfo.getId());
+            messageSendDto.setContactName(userInfo.getNickName());
+            messageSendDto.setExtendData(null);
+        } else {
+            messageSendDto.setContactId(messageSendDto.getSendUserId());
+            messageSendDto.setContactName(messageSendDto.getSendUserNickName());
+        }
         sendChannel.writeAndFlush(new TextWebSocketFrame(JsonUtils.convertObj2Json(messageSendDto)));
 
+    }
+
+    public void addUser2Group(String userId, String groupId) {
+        Channel channel = USER_CONTEXT_MAP.get(userId);
+        add2Group(groupId, channel);
     }
 
     private void add2Group(String userId, Channel channel) {

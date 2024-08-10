@@ -7,7 +7,7 @@ import fun.whitea.easychatbackend.entity.po.UserContactApply;
 
 import java.util.List;
 
-public interface UserContactApplyService{
+public interface UserContactApplyService extends IService<UserContactApply> {
     Page<UserContactApply> loadApply(String userId, Integer pageNo);
 
     void dealWithApply(String userId, Integer applyId, Integer status);

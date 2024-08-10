@@ -72,6 +72,15 @@ public class RedisComponent {
         redisUtil.lPushAll(Constants.REDIS_KEY_USER_CONTACT + userId, contactIds, Constants.REDIS_TIME_DAY * 2, TimeUnit.MILLISECONDS);
     }
 
+    // 添加联系人
+    public void addUserContact(String userId, String contactId) {
+        List<String> userContactIds = getUserContactIds(userId);
+        if (userContactIds.contains(contactId)) {
+            return;
+        }
+        redisUtil.lPush(Constants.REDIS_KEY_USER_CONTACT + userId, contactId, Constants.REDIS_TIME_DAY * 2, TimeUnit.MILLISECONDS);
+    }
+
     public List<String> getUserContactIds(String userId) {
         return (List<String>) redisUtil.getQueueList(Constants.REDIS_KEY_USER_CONTACT + userId);
     }

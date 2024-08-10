@@ -56,14 +56,15 @@ public class RedisConfig {
 
     @Bean(name = "redissonClient", destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
+        Config config = null;
         try {
-            Config config = new Config();
+            config = new Config();
             config.useSingleServer()
                     .setAddress("redis://" + redisHost + ":" + redisPort);
-            return Redisson.create(config);
         } catch (Exception e) {
             logger.info("redis配置错误, " + e.getMessage());
         }
+        return Redisson.create(config);
     }
 
 }

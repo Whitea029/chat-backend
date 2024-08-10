@@ -22,7 +22,7 @@ public class ChatSessionUser implements Serializable {
     @TableField(exist = false)
     private String lastMessage;
     @TableField(exist = false)
-    private String lastReceiveTime;
+    private Long lastReceiveTime;
     @TableField(exist = false)
     private Integer MemberCount;
     @TableField(exist = false)

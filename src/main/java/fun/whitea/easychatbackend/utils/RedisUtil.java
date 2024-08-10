@@ -127,6 +127,11 @@ public class RedisUtil {
         redisTemplate.expire(prefix + key, time, timeUnit);
     }
 
+    public void lPush(String key, String value, Integer time, TimeUnit timeUnit) {
+        redisTemplate.opsForList().leftPush(prefix + key, JsonUtils.convertObj2Json(value));
+        redisTemplate.expire(prefix + key, time, timeUnit);
+    }
+
     public List getQueueList(String key) {
         return redisTemplate.opsForList().range(prefix + key, 0, -1);
     }
